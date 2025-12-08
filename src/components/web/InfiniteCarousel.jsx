@@ -22,11 +22,11 @@ export default function InfiniteCarousel({ images = defaultImages, speed = 40 })
       <div className="carousel-container">
         {/* First set of images */}
         <div className="carousel-track" style={{ animationDuration: `${speed}s` }}>
-          {images.map((image) => (
-            <div
-              key={`first-${image.id}`}
-              className="carousel-item"
-            >
+          {images.map((image, index) => (
+  <div
+    key={`first-${image.id}-${index}`}
+    className="carousel-item"
+  >
               <img
                 src={image.url}
                 alt={image.alt}
@@ -35,11 +35,11 @@ export default function InfiniteCarousel({ images = defaultImages, speed = 40 })
             </div>
           ))}
           {/* Duplicate set for seamless loop */}
-          {images.map((image) => (
-            <div
-              key={`second-${image.id}`}
-              className="carousel-item"
-            >
+         {images.map((image, index) => (
+  <div
+    key={`second-${image.id}-${index}`}
+    className="carousel-item"
+  >
               <img
                 src={image.url}
                 alt={image.alt}

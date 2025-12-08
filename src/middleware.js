@@ -112,6 +112,7 @@ function handleApiRoutes(request, pathname, isLoggedIn) {
     '/api/onboarding/complete',
     '/api/upload/public/presigned-url',
     '/api/workspaces/check-slug', // Allow slug checking without auth
+     '/api/sanity-test', // 👈 allow sanity test endpoint without auth
   ]
 
   // Workspace management API routes (require auth but not workspace)

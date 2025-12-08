@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -8,30 +8,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { X } from 'lucide-react'
+import { client } from '@/sanity/lib/client'
+import imageUrlBuilder from '@sanity/image-url'
+import { PortableText } from '@portabletext/react'
 
-const startupStory = [
-  {
-    id: 1,
-    name: 'Janesx Technologies',
-    description: 'Janesx is a space-tech startup that was part of our 2025 cohort, revolutionizing satellite data analytics.',
-    image: '/noise.jpg',
-    story: `Janesx Technologies joined the NIGCOMSAT Accelerator in 2025 with a vision to democratize satellite data analytics for African businesses.
-
-Through the program, they received mentorship from industry leaders, access to cutting-edge satellite technology, and connections with potential clients across multiple sectors.
-
-The journey wasn't easy. The team faced challenges in scaling their infrastructure and finding the right product-market fit. However, with guidance from our mentors and access to NIGCOMSAT's resources, they pivoted their approach and developed a groundbreaking solution for agricultural monitoring using satellite imagery.
-
-Within 12 months of joining the accelerator, Janesx secured partnerships with three major agricultural companies and raised $2M in seed funding. Today, they're helping farmers across Nigeria optimize crop yields using real-time satellite data, making precision agriculture accessible to smallholder farmers.
-
-Their success story demonstrates the transformative power of combining innovative technology with the right support system. The NIGCOMSAT Accelerator provided not just resources, but a community of experts and fellow entrepreneurs who believed in their vision.`
-  }
-]
+// Image URL builder
+const builder = imageUrlBuilder(client)
+function urlFor(source) {
+  return builder.image(source)
+}
 
 const StartupCard = ({ item, onClick }) => {
   return (
     <div className='flex flex-col w-full md:w-[340px] bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300'>
       <div className='h-[250px] w-full overflow-hidden'>
-        <img src={item.image} alt={item.name} className='object-cover w-full h-full hover:scale-105 transition-transform duration-300' />
+        <img
+          src={item.image ? urlFor(item.image).width(680).height(500).url() : '/noise.jpg'}
+          alt={item.name}
+          className='object-cover w-full h-full hover:scale-105 transition-transform duration-300'
+        />
       </div>
       <div className='p-5 flex flex-col flex-grow'>
         <div className='space-y-2 mb-4 flex-grow'>
@@ -66,7 +61,7 @@ const StoryModal = ({ item, open, onClose }) => {
           {/* Left side - Image */}
           <div className='h-[300px] md:h-full md:min-h-[500px] relative'>
             <img
-              src={item.image}
+              src={item.image ? urlFor(item.image).width(800).height(600).url() : '/noise.jpg'}
               alt={item.name}
               className='w-full h-full object-fit'
             />
@@ -83,11 +78,24 @@ const StoryModal = ({ item, open, onClose }) => {
             </DialogHeader>
 
             <div className='prose prose-base md:prose-lg max-w-none'>
-              {item.story.split('\n\n').map((paragraph, index) => (
-                <p key={index} className='text-gray-700 leading-relaxed mb-4 text-sm md:text-base'>
-                  {paragraph}
-                </p>
-              ))}
+              {item.story ? (
+                <PortableText
+                  value={item.story}
+                  components={{
+                    block: {
+                      normal: ({ children }) => <p className='text-gray-700 leading-relaxed mb-4 text-sm md:text-base'>{children}</p>,
+                    }
+                  }}
+                />
+              ) : item.storyText ? (
+                item.storyText.split('\n\n').map((paragraph, index) => (
+                  <p key={index} className='text-gray-700 leading-relaxed mb-4 text-sm md:text-base'>
+                    {paragraph}
+                  </p>
+                ))
+              ) : (
+                <p className='text-gray-500'>No story content available.</p>
+              )}
             </div>
           </div>
         </div>
@@ -97,8 +105,57 @@ const StoryModal = ({ item, open, onClose }) => {
 }
 
 const StartupSucessStory = () => {
+  const [stories, setStories] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedStory, setSelectedStory] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  useEffect(() => {
+    async function fetchStories() {
+      try {
+        const data = await client.fetch(`
+          *[_type == "successStory"] | order(order asc, _createdAt desc) {
+            _id,
+            name,
+            slug,
+            description,
+            image,
+            story
+          }
+        `)
+        // Use fallback data if Sanity is empty
+        if (data && data.length > 0) {
+          setStories(data)
+        } else {
+          setStories(fallbackStories)
+        }
+      } catch (error) {
+        console.error('Error fetching success stories:', error)
+        setStories(fallbackStories)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStories()
+  }, [])
+
+  // Fallback data when Sanity has no content
+  const fallbackStories = [
+    {
+      _id: 'fallback-1',
+      name: 'Janesx Technologies',
+      description: 'Janesx is a space-tech startup that was part of our 2025 cohort, revolutionizing satellite data analytics.',
+      image: null,
+      fallbackImage: '/noise.jpg',
+      storyText: `Janesx Technologies joined the NIGCOMSAT Accelerator in 2025 with a vision to democratize satellite data analytics for African businesses.
+
+Through the program, they received mentorship from industry leaders, access to cutting-edge satellite technology, and connections with potential clients across multiple sectors.
+
+The journey wasn't easy. The team faced challenges in scaling their infrastructure and finding the right product-market fit. However, with guidance from our mentors and access to NIGCOMSAT's resources, they pivoted their approach and developed a groundbreaking solution for agricultural monitoring using satellite imagery.
+
+Within 12 months of joining the accelerator, Janesx secured partnerships with three major agricultural companies and raised $2M in seed funding. Today, they're helping farmers across Nigeria optimize crop yields using real-time satellite data, making precision agriculture accessible to smallholder farmers.`
+    }
+  ]
 
   const handleCardClick = (item) => {
     setSelectedStory(item)
@@ -108,6 +165,26 @@ const StartupSucessStory = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setTimeout(() => setSelectedStory(null), 300)
+  }
+
+  if (loading) {
+    return (
+      <div className='flex flex-col gap-8 md:gap-12 w-full px-4 md:px-8 lg:px-[10vw] py-16 min-h-[40vh]'>
+        <div className='space-y-3'>
+          <div className='h-12 w-64 bg-gray-200 rounded animate-pulse'></div>
+          <div className='h-6 w-96 bg-gray-200 rounded animate-pulse'></div>
+        </div>
+        <div className='flex flex-wrap gap-6'>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className='w-full md:w-[340px] h-[400px] bg-gray-200 rounded-xl animate-pulse'></div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (stories.length === 0) {
+    return null // Don't show section if no stories
   }
 
   return (
@@ -120,8 +197,8 @@ const StartupSucessStory = () => {
       </div>
 
       <div className='flex flex-wrap gap-6 justify-start'>
-        {startupStory.map((item) => (
-          <StartupCard key={item.id} item={item} onClick={() => handleCardClick(item)} />
+        {stories.map((item) => (
+          <StartupCard key={item._id} item={item} onClick={() => handleCardClick(item)} />
         ))}
       </div>
 
@@ -131,3 +208,4 @@ const StartupSucessStory = () => {
 }
 
 export default StartupSucessStory
+
