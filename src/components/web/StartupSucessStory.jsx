@@ -12,10 +12,13 @@ import { client } from '@/sanity/lib/client'
 import imageUrlBuilder from '@sanity/image-url'
 import { PortableText } from '@portabletext/react'
 
-// Image URL builder
-const builder = imageUrlBuilder(client)
+// Image URL builder - lazy initialization
+let _builder = null
 function urlFor(source) {
-  return builder.image(source)
+  if (!_builder) {
+    _builder = imageUrlBuilder(client)
+  }
+  return _builder.image(source)
 }
 
 const StartupCard = ({ item, onClick }) => {

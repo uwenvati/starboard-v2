@@ -3,10 +3,13 @@ import { useState, useEffect } from 'react'
 import { client } from '@/sanity/lib/client'
 import imageUrlBuilder from '@sanity/image-url'
 
-// Image URL builder
-const builder = imageUrlBuilder(client)
+// Image URL builder - lazy initialization
+let _builder = null
 function urlFor(source) {
-  return builder.image(source)
+  if (!_builder) {
+    _builder = imageUrlBuilder(client)
+  }
+  return _builder.image(source)
 }
 
 const PublicEventsPage = () => {
@@ -174,8 +177,8 @@ const PublicEventsPage = () => {
               key={filter.id}
               onClick={() => setSelectedFilter(filter.id)}
               className={`px-6 py-2.5 rounded-full font-medium transition-all ${selectedFilter === filter.id
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               {filter.label}
