@@ -56,7 +56,7 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "lucide-react": "^0.511.0",
-    "next": "15.3.2",
+    "next": "^16.0.8",
     "next-auth": "5.0.0-beta.24",
     "next-sanity": "^11.6.10",
     "nodemailer": "^6.10.1",
@@ -81,6 +81,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "eslint": "^9.39.1",
     "prisma": "^6.8.2",
     "tailwindcss": "^4",
     "tailwindcss-animate": "^1.0.7",
